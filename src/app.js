@@ -3,6 +3,7 @@ const cors = require('cors');
 const bodyParser = require('body-parser');
 require('dotenv').config();
 const connectDB = require('./config/database');
+const faqRoutes = require('./routes/faq.routes');
 
 const app = express();
 
@@ -11,8 +12,11 @@ connectDB();
 
 // Middleware
 app.use(cors());
-app.use(bodyParser.json());
+app.use(bodyParser.json({ limit: '10mb' }));
 app.use(bodyParser.urlencoded({ extended: true }));
+
+// Routes
+app.use('/api/faqs', faqRoutes);
 
 // Basic route
 app.get('/', (req, res) => {
