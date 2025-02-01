@@ -19,6 +19,7 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
+    "@google-cloud/translate": "^8.5.0",
     "body-parser": "^1.20.3",
     "cors": "^2.8.5",
     "dompurify": "^3.2.4",

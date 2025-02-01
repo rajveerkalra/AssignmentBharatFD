@@ -3,8 +3,11 @@ const router = express.Router();
 const faqController = require('../controllers/faq.controller');
 const { validateFAQ } = require('../middleware/validation.middleware');
 const cacheMiddleware = require('../middleware/cache.middleware');
+const translateMiddleware = require('../middleware/translation.middleware');
 
-// FAQ routes
+// Apply translation middleware to all routes
+router.use(translateMiddleware);
+
 router.post('/', validateFAQ, faqController.create);
 router.get('/', cacheMiddleware, faqController.getAll);
 router.get('/:id', faqController.getOne);
