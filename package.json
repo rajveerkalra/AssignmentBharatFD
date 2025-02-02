@@ -33,7 +33,9 @@
     "jsdom": "^26.0.0",
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.9.6",
-    "redis": "^4.7.0"
+    "redis": "^4.7.0",
+    "swagger-jsdoc": "^6.2.8",
+    "swagger-ui-express": "^5.0.1"
   },
   "devDependencies": {
     "@shelf/jest-mongodb": "^4.3.2",
