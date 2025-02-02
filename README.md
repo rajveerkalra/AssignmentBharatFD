@@ -272,7 +272,7 @@ This project is licensed under the MIT License.
 ## Author
 
 Rajveer Singh Kalra
-- GitHub: [@yourusername](https://github.com/rajveerkalra)
+- GitHub: [@rajveerkalra](https://github.com/rajveerkalra)
 - Email: rajveersinghkalra29@gmail.com
 
 ## Support
