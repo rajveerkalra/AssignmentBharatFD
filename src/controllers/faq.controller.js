@@ -1,71 +1,81 @@
 const FAQ = require('../models/faq.model');
-const translationService = require('../services/translation.service');
+const { NotFoundError, ValidationError } = require('../utils/errors');
+const logger = require('../config/logger');
 
 const faqController = {
-    // Create new FAQ
-    async create(req, res) {
+    async create(req, res, next) {
         try {
-            const { question, answer, category, order } = req.body;
-            
-            // Auto-translate to supported languages if only English is provided
-            if (question.en && !question.hi) {
-                question.hi = await translationService.translateText(question.en, 'hi');
-            }
-            if (answer.en && !answer.hi) {
-                answer.hi = await translationService.translateText(answer.en, 'hi');
-            }
-
-            const faq = new FAQ({
-                question,
-                answer,
-                category,
-                order: order || 0
-            });
-
+            const faq = new FAQ(req.body);
             const savedFAQ = await faq.save();
+            
+            logger.info('FAQ created', { id: savedFAQ._id });
             res.status(201).json(savedFAQ);
         } catch (error) {
-            res.status(400).json({ message: error.message });
+            next(error);
         }
     },
 
-    // Get all FAQs
-    async getAll(req, res) {
+    async getAll(req, res, next) {
         try {
             const { lang = 'en', category } = req.query;
             const query = category ? { category, isActive: true } : { isActive: true };
             
             const faqs = await FAQ.find(query).sort({ order: 1 });
+            const translatedFaqs = faqs.map(faq => faq.getTranslated(lang));
             
-            if (lang === 'en') {
-                return res.json(faqs.map(faq => faq.getTranslated('en')));
-            }
-
-            // Translate FAQs if needed
-            const translatedFaqs = await Promise.all(
-                faqs.map(async (faq) => {
-                    // If translation exists in database, use it
-                    if (faq.question[lang] && faq.answer[lang]) {
-                        return faq.getTranslated(lang);
-                    }
-                    
-                    // Otherwise, translate on the fly
-                    const translated = await translationService.translateFAQ(faq, lang);
-                    return {
-                        ...faq.toObject(),
-                        question: translated.question,
-                        answer: translated.answer
-                    };
-                })
-            );
-            
+            logger.info('FAQs retrieved', { count: faqs.length, lang, category });
             res.json(translatedFaqs);
         } catch (error) {
-            res.status(500).json({ message: error.message });
+            next(error);
         }
     },
 
-    // Other methods remain the same...
+    async getOne(req, res, next) {
+        try {
+            const faq = await FAQ.findById(req.params.id);
+            if (!faq) {
+                throw new NotFoundError('FAQ not found');
+            }
+            
+            logger.info('FAQ retrieved', { id: faq._id });
+            res.json(faq);
+        } catch (error) {
+            next(error);
+        }
+    },
+
+    async update(req, res, next) {
+        try {
+            const faq = await FAQ.findByIdAndUpdate(
+                req.params.id,
+                req.body,
+                { new: true, runValidators: true }
+            );
+            
+            if (!faq) {
+                throw new NotFoundError('FAQ not found');
+            }
+            
+            logger.info('FAQ updated', { id: faq._id });
+            res.json(faq);
+        } catch (error) {
+            next(error);
+        }
+    },
+
+    async delete(req, res, next) {
+        try {
+            const faq = await FAQ.findByIdAndDelete(req.params.id);
+            if (!faq) {
+                throw new NotFoundError('FAQ not found');
+            }
+            
+            logger.info('FAQ deleted', { id: req.params.id });
+            res.json({ message: 'FAQ deleted successfully' });
+        } catch (error) {
+            next(error);
+        }
+    }
 };
 
 module.exports = faqController;

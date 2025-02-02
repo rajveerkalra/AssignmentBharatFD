@@ -7,6 +7,9 @@ const swaggerUi = require('swagger-ui-express');
 const swaggerSpecs = require('./config/swagger');
 const faqRoutes = require('./routes/faq.routes');
 const adminRoutes = require('./routes/admin.routes');
+const { errorHandler, notFound } = require('./middleware/error.middleware');
+const logger = require('./config/logger');
+
 
 const app = express();
 
@@ -17,6 +20,20 @@ connectDB();
 app.use(cors());
 app.use(bodyParser.json({ limit: '10mb' }));
 app.use(bodyParser.urlencoded({ extended: true }));
+app.use(notFound);
+app.use(errorHandler);
+
+
+// Unhandled rejection handling
+process.on('unhandledRejection', (err) => {
+    logger.error('UNHANDLED REJECTION! 💥 Shutting down...', err);
+    process.exit(1);
+});
+
+process.on('uncaughtException', (err) => {
+    logger.error('UNCAUGHT EXCEPTION! 💥 Shutting down...', err);
+    process.exit(1);
+});
 
 // Routes
 
