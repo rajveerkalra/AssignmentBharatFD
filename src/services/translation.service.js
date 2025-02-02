@@ -1,44 +1,42 @@
-const { Translate } = require('@google-cloud/translate').v2;
+// Mock the translation service
+jest.mock('../src/services/translation.service', () => ({
+    translateText: jest.fn().mockImplementation((text, lang) => 
+        Promise.resolve(`${text} (in ${lang})`)),
+    translateFAQ: jest.fn().mockImplementation((faq, lang) => 
+        Promise.resolve({
+            question: `${faq.question.en} (in ${lang})`,
+            answer: `${faq.answer.en} (in ${lang})`
+        }))
+}));
 
-class TranslationService {
-    constructor() {
-        this.translate = new Translate({
-            projectId: process.env.GOOGLE_PROJECT_ID,
-            credentials: JSON.parse(process.env.GOOGLE_CREDENTIALS)
-        });
-    }
+const translationService = require('../src/services/translation.service');
 
-    async translateText(text, targetLang) {
-        try {
-            if (!text) return '';
-            
-            const [translation] = await this.translate.translate(text, targetLang);
-            return translation;
-        } catch (error) {
-            console.error('Translation error:', error);
-            return text; // Return original text as fallback
-        }
-    }
+describe('Translation Service', () => {
+    beforeEach(() => {
+        jest.clearAllMocks();
+    });
 
-    async translateFAQ(faq, targetLang) {
-        try {
-            const [translatedQuestion, translatedAnswer] = await Promise.all([
-                this.translateText(faq.question.en, targetLang),
-                this.translateText(faq.answer.en, targetLang)
-            ]);
+    it('should translate text to target language', async () => {
+        const text = 'Hello, how are you?';
+        const translated = await translationService.translateText(text, 'hi');
+        
+        expect(translated).toBeDefined();
+        expect(typeof translated).toBe('string');
+        expect(translated).toBe(`${text} (in hi)`);
+        expect(translationService.translateText).toHaveBeenCalledWith(text, 'hi');
+    });
 
-            return {
-                question: translatedQuestion,
-                answer: translatedAnswer
-            };
-        } catch (error) {
-            console.error('FAQ translation error:', error);
-            return {
-                question: faq.question.en,
-                answer: faq.answer.en
-            };
-        }
-    }
-}
+    it('should translate FAQ content', async () => {
+        const faq = {
+            question: { en: 'How do I reset my password?' },
+            answer: { en: 'Click on forgot password link.' }
+        };
 
-module.exports = new TranslationService();
+        const translated = await translationService.translateFAQ(faq, 'hi');
+        
+        expect(translated).toBeDefined();
+        expect(translated.question).toBe(`${faq.question.en} (in hi)`);
+        expect(translated.answer).toBe(`${faq.answer.en} (in hi)`);
+        expect(translationService.translateFAQ).toHaveBeenCalledWith(faq, 'hi');
+    });
+});

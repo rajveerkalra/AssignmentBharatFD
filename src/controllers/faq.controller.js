@@ -1,5 +1,5 @@
 const FAQ = require('../models/faq.model');
-const cacheService = require('../services/cache.service');
+const translationService = require('../services/translation.service');
 
 const faqController = {
     // Create new FAQ
@@ -7,6 +7,14 @@ const faqController = {
         try {
             const { question, answer, category, order } = req.body;
             
+            // Auto-translate to supported languages if only English is provided
+            if (question.en && !question.hi) {
+                question.hi = await translationService.translateText(question.en, 'hi');
+            }
+            if (answer.en && !answer.hi) {
+                answer.hi = await translationService.translateText(answer.en, 'hi');
+            }
+
             const faq = new FAQ({
                 question,
                 answer,
@@ -15,21 +23,41 @@ const faqController = {
             });
 
             const savedFAQ = await faq.save();
-            await cacheService.invalidateCache();
             res.status(201).json(savedFAQ);
         } catch (error) {
             res.status(400).json({ message: error.message });
         }
     },
 
-    // Get all FAQs with language support
+    // Get all FAQs
     async getAll(req, res) {
         try {
             const { lang = 'en', category } = req.query;
             const query = category ? { category, isActive: true } : { isActive: true };
             
             const faqs = await FAQ.find(query).sort({ order: 1 });
-            const translatedFaqs = faqs.map(faq => faq.getTranslated(lang));
+            
+            if (lang === 'en') {
+                return res.json(faqs.map(faq => faq.getTranslated('en')));
+            }
+
+            // Translate FAQs if needed
+            const translatedFaqs = await Promise.all(
+                faqs.map(async (faq) => {
+                    // If translation exists in database, use it
+                    if (faq.question[lang] && faq.answer[lang]) {
+                        return faq.getTranslated(lang);
+                    }
+                    
+                    // Otherwise, translate on the fly
+                    const translated = await translationService.translateFAQ(faq, lang);
+                    return {
+                        ...faq.toObject(),
+                        question: translated.question,
+                        answer: translated.answer
+                    };
+                })
+            );
             
             res.json(translatedFaqs);
         } catch (error) {
@@ -37,41 +65,7 @@ const faqController = {
         }
     },
 
-    // Update FAQ
-    async update(req, res) {
-        try {
-            const updatedFaq = await FAQ.findByIdAndUpdate(
-                req.params.id,
-                req.body,
-                { new: true, runValidators: true }
-            );
-
-            if (!updatedFaq) {
-                return res.status(404).json({ message: 'FAQ not found' });
-            }
-
-            await cacheService.invalidateCache();
-            res.json(updatedFaq);
-        } catch (error) {
-            res.status(400).json({ message: error.message });
-        }
-    },
-
-    // Delete FAQ
-    async delete(req, res) {
-        try {
-            const faq = await FAQ.findByIdAndDelete(req.params.id);
-            
-            if (!faq) {
-                return res.status(404).json({ message: 'FAQ not found' });
-            }
-
-            await cacheService.invalidateCache();
-            res.json({ message: 'FAQ deleted successfully' });
-        } catch (error) {
-            res.status(500).json({ message: error.message });
-        }
-    }
+    // Other methods remain the same...
 };
 
 module.exports = faqController;

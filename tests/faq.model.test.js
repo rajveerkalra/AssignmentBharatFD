@@ -1,16 +1,23 @@
 const mongoose = require('mongoose');
+const { MongoMemoryServer } = require('mongodb-memory-server');
 const FAQ = require('../src/models/faq.model');
 
 describe('FAQ Model Test', () => {
+    let mongoServer;
+
     beforeAll(async () => {
-        await mongoose.connect(global.__MONGO_URI__, {
-            useNewUrlParser: true,
-            useUnifiedTopology: true,
-        });
+        mongoServer = await MongoMemoryServer.create();
+        const mongoUri = await mongoServer.getUri();
+        await mongoose.connect(mongoUri);
     });
 
     afterAll(async () => {
-        await mongoose.connection.close();
+        await mongoose.disconnect();
+        await mongoServer.stop();
+    });
+
+    beforeEach(async () => {
+        await FAQ.deleteMany({});
     });
 
     it('should create & save FAQ successfully', async () => {
@@ -25,6 +32,7 @@ describe('FAQ Model Test', () => {
             },
             category: 'General'
         });
+        
         const savedFAQ = await validFAQ.save();
         
         expect(savedFAQ._id).toBeDefined();

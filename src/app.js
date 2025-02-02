@@ -4,6 +4,7 @@ const bodyParser = require('body-parser');
 require('dotenv').config();
 const connectDB = require('./config/database');
 const faqRoutes = require('./routes/faq.routes');
+const adminRoutes = require('./routes/admin.routes');
 
 const app = express();
 
@@ -17,6 +18,8 @@ app.use(bodyParser.urlencoded({ extended: true }));
 
 // Routes
 app.use('/api/faqs', faqRoutes);
+app.use('/api/faqs', faqRoutes);
+app.use('/api/admin', adminRoutes)
 
 // Basic route
 app.get('/', (req, res) => {
