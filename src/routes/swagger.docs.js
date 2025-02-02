@@ -1,5 +1,16 @@
 /**
  * @swagger
+ * parameters: [
+    {
+        in: 'query',
+        name: 'lang',
+        schema: {
+            type: 'string',
+            default: 'en'
+        },
+        description: 'Language code (default: en)'
+    }
+]
  * components:
  *   schemas:
  *     FAQ:

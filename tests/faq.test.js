@@ -1,4 +1,4 @@
-describe('FAQ Model', () => {
+describe('FAQ Tests', () => {
     it('should create FAQ', () => {
         expect(true).toBe(true);
     });

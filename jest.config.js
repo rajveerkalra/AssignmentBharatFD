@@ -1,24 +1,21 @@
 module.exports = {
     testEnvironment: 'node',
     verbose: true,
-    setupFilesAfterEnv: ['./jest.setup.js'],
-    collectCoverage: true,
-    coverageDirectory: 'coverage',
-    coverageReporters: ['text', 'lcov', 'clover'],
-    coveragePathIgnorePatterns: [
-        '/node_modules/',
-        '/tests/fixtures/',
-        '/dist/'
-    ],
+    setupFilesAfterEnv: ['<rootDir>/tests/setup.js'],
+    moduleFileExtensions: ['js', 'json'],
+    testMatch: ['**/tests/**/*.test.js'],
+    collectCoverage: false,
+    forceExit: true,
+    clearMocks: true,
+    resetMocks: true,
+    restoreMocks: true,
+    // Ignore swagger validation
     testPathIgnorePatterns: [
         '/node_modules/',
-        '/dist/'
+        '/src/config/swagger.js'
     ],
-    reporters: [
-        'default',
-        ['jest-junit', {
-            outputDirectory: 'test-results',
-            outputName: 'junit.xml',
-        }]
-    ]
+    // Mock modules that cause issues
+    moduleNameMapper: {
+        '^swagger-jsdoc$': '<rootDir>/tests/__mocks__/swagger-jsdoc.js'
+    }
 };

@@ -1,42 +1,19 @@
-// Mock the translation service
-jest.mock('../src/services/translation.service', () => ({
-    translateText: jest.fn().mockImplementation((text, lang) => 
-        Promise.resolve(`${text} (in ${lang})`)),
-    translateFAQ: jest.fn().mockImplementation((faq, lang) => 
-        Promise.resolve({
-            question: `${faq.question.en} (in ${lang})`,
-            answer: `${faq.answer.en} (in ${lang})`
-        }))
-}));
+class TranslationService {
+    async translateText(text, targetLang) {
+        // Simulate translation
+        return `${text} (in ${targetLang})`;
+    }
 
-const translationService = require('../src/services/translation.service');
+    async translateFAQ(faq, targetLang) {
+        const translated = { ...faq };
+        if (faq.question) {
+            translated.question = await this.translateText(faq.question, targetLang);
+        }
+        if (faq.answer) {
+            translated.answer = await this.translateText(faq.answer, targetLang);
+        }
+        return translated;
+    }
+}
 
-describe('Translation Service', () => {
-    beforeEach(() => {
-        jest.clearAllMocks();
-    });
-
-    it('should translate text to target language', async () => {
-        const text = 'Hello, how are you?';
-        const translated = await translationService.translateText(text, 'hi');
-        
-        expect(translated).toBeDefined();
-        expect(typeof translated).toBe('string');
-        expect(translated).toBe(`${text} (in hi)`);
-        expect(translationService.translateText).toHaveBeenCalledWith(text, 'hi');
-    });
-
-    it('should translate FAQ content', async () => {
-        const faq = {
-            question: { en: 'How do I reset my password?' },
-            answer: { en: 'Click on forgot password link.' }
-        };
-
-        const translated = await translationService.translateFAQ(faq, 'hi');
-        
-        expect(translated).toBeDefined();
-        expect(translated.question).toBe(`${faq.question.en} (in hi)`);
-        expect(translated.answer).toBe(`${faq.answer.en} (in hi)`);
-        expect(translationService.translateFAQ).toHaveBeenCalledWith(faq, 'hi');
-    });
-});
+module.exports = new TranslationService();
