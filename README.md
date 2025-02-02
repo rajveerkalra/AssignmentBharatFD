@@ -277,7 +277,7 @@ Rajveer Singh Kalra
 
 ## Support
 
-For support, email your.email@example.com or create an issue in the repository.
+For support, email rajveersinghkalra29@example.com or create an issue in the repository.
 
 ## Acknowledgments
 
